@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jurisprudence Live Whiteboard</title>
+    
+    <!-- Firebase SDK (Compat version for simplicity in single file) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        /* OBS-ல் பின்னணி வெளிப்படையாக (Transparent) இருக்க */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent !important; 
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        /* முழுத் திரையையும் ஆக்கிரமிக்கும் கேன்வாஸ் */
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+
+        /* டூல்ஸ் பெட்டி (கீழே மிதக்கும்படி) */
+        .toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .toolbar button, .toolbar input {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            background: none;
+        }
+
+        .tool-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            color: #333;
+            transition: 0.3s;
+        }
+
+        .tool-btn.active {
+            background-color: #00478F;
+            color: white;
+        }
+
+        .tool-btn:hover { background-color: #ddd; }
+        .clear-btn { background-color: #ff4d4d; color: white; }
+        .clear-btn:hover { background-color: #cc0000; }
+    </style>
+</head>
+<body>
+
+    <!-- மிதக்கும் கருவிகள் பெட்டி -->
+    <div class="toolbar">
+        <input type="color" id="colorPicker" value="#ff0000" title="வண்ணம் மாற்று">
+        <input type="range" id="sizePicker" min="2" max="20" value="4" title="தடிமன் மாற்று">
+        <button class="tool-btn active" id="penBtn" onclick="setMode('pen')">Pen</button>
+        <button class="tool-btn" id="eraserBtn" onclick="setMode('eraser')">Eraser</button>
+        <button class="tool-btn clear-btn" onclick="clearBoardRemotely()">Clear All</button>
+    </div>
+
+    <!-- வரையும் பகுதி -->
+    <canvas id="whiteboard"></canvas>
+
+    <script>
+        // 1. உங்களின் FIREBASE CONFIG-ஐ இங்கே போடவும்
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_DATABASE_NAME.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Firebase-ஐ தொடங்குதல்
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const boardRef = db.ref('jurisprudence_live_board');
+
+        // Canvas அமைப்புகள்
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+        
+        // திரையின் அளவிற்கேற்ப கேன்வாஸை மாற்றுதல்
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // வரைவதற்கான மாறிகள்
+        let isDrawing = false;
+        let current = { x: 0, y: 0 };
+        let mode = 'pen'; // 'pen' அல்லது 'eraser'
+
+        // கருவிகளின் அமைப்புகள்
+        const colorPicker = document.getElementById('colorPicker');
+        const sizePicker = document.getElementById('sizePicker');
+        
+        function setMode(newMode) {
+            mode = newMode;
+            document.getElementById('penBtn').classList.toggle('active', mode === 'pen');
+            document.getElementById('eraserBtn').classList.toggle('active', mode === 'eraser');
+        }
+
+        // வரையும் நிகழ்வுகள் (Mouse & Touch)
+        canvas.addEventListener('mousedown', onMouseDown);
+        canvas.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('mouseout', onMouseUp);
+        canvas.addEventListener('mousemove', onMouseMove);
+
+        canvas.addEventListener('touchstart', onTouchStart, {passive: false});
+        canvas.addEventListener('touchend', onMouseUp);
+        canvas.addEventListener('touchcancel', onMouseUp);
+        canvas.addEventListener('touchmove', onTouchMove, {passive: false});
+
+        function onMouseDown(e) {
+            isDrawing = true;
+            current.x = e.clientX;
+            current.y = e.clientY;
+        }
+
+        function onTouchStart(e) {
+            isDrawing = true;
+            current.x = e.touches[0].clientX;
+            current.y = e.touches[0].clientY;
+        }
+
+        function onMouseMove(e) {
+            if (!isDrawing) return;
+            drawLine(current.x, current.y, e.clientX, e.clientY, colorPicker.value, sizePicker.value, mode, true);
+            current.x = e.clientX;
+            current.y = e.clientY;
+        }
+
+        function onTouchMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); // ஸ்க்ரோல் ஆவதைத் தடுக்க
+            drawLine(current.x, current.y, e.touches[0].clientX, e.touches[0].clientY, colorPicker.value, sizePicker.value, mode, true);
+            current.x = e.touches[0].clientX;
+            current.y = e.touches[0].clientY;
+        }
+
+        function onMouseUp() {
+            isDrawing = false;
+        }
+
+        // கோடுகளை வரையும் செயல்பாடு
+        function drawLine(x0, y0, x1, y1, color, size, drawMode, emit) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Eraser ஆக இருந்தால் பின்னணியை அழிக்க (Transparent ஆக்க)
+            if (drawMode === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = "rgba(0,0,0,1)"; 
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = color;
+            }
+
+            ctx.stroke();
+            ctx.closePath();
+
+            // Firebase-க்கு தரவை அனுப்புதல் (நாம் வரைந்தால் மட்டும்)
+            if (!emit) return;
+            
+            boardRef.push({
+                x0: x0 / canvas.width,
+                y0: y0 / canvas.height,
+                x1: x1 / canvas.width,
+                y1: y1 / canvas.height,
+                color: color,
+                size: size,
+                mode: drawMode
+            });
+        }
+
+        // ----------------------------------------------------
+        // FIREBASE LISTENER (மற்றவர்கள் / OBS திரையில் வரைய)
+        // ----------------------------------------------------
+        
+        boardRef.on('child_added', (snapshot) => {
+            const data = snapshot.val();
+            // 'clear' கமாண்ட் வந்தால் பலகையைச் சுத்தப்படுத்த
+            if (data.command === 'clear') {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            } else {
+                // திரையின் அளவிற்கேற்ப கோடுகளைப் பொருத்துதல்
+                drawLine(
+                    data.x0 * canvas.width, 
+                    data.y0 * canvas.height, 
+                    data.x1 * canvas.width, 
+                    data.y1 * canvas.height, 
+                    data.color, 
+                    data.size, 
+                    data.mode, 
+                    false // emit = false (மீண்டும் Firebase-க்கு அனுப்பக் கூடாது)
+                );
+            }
+        });
+
+        // பலகையைச் சுத்தப்படுத்துதல் (Clear Board)
+        function clearBoardRemotely() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            boardRef.push({ command: 'clear' }); // மற்ற திரைகளுக்கும் clear கமாண்டை அனுப்புதல்
+        }
+
+    </script>
+</body>
+</html>
