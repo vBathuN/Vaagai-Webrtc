@@ -2,21 +2,21 @@
 <html lang="ta">
 <head>
     <meta charset="UTF-8">
-    <title>LawTamil Master Visualizer Pro</title>
+    <title>Vaagai Live WebRTC Visualizer</title>
     <style>
         body { 
             background-color: transparent !important; margin: 0; overflow: hidden; 
-            height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; 
+            height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; 
         }
         
         .anim-section { 
             width: 100%; height: 100%; 
-            position: relative; display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box;
+            position: relative; display: flex; justify-content: center; align-items: center;
         }
         
         #justice-glow {
             position: absolute; 
-            top: 33%; left: 66%; 
+            top: 50%; left: 50%; 
             width: 60px; height: 110px;
             border-radius: 0 100% 0 100%;
             transform: translate(-50%, -50%) rotate(15deg);
@@ -26,7 +26,8 @@
         }
         
         #visualizer { 
-            position: absolute; top: 48.2%; left: 53%; transform: translate(-50%, -50%); width: 160px; height: 160px; z-index: 4; pointer-events: none; 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 160px; height: 160px; z-index: 6; pointer-events: none; 
             opacity: 0; 
             transition: opacity 0.4s ease-in-out; 
         }
@@ -145,7 +146,6 @@
                 
                 let val = dataArray[dIdx] || 0;
                 
-                // Noise Gate: சிறிய இரைச்சல்களைத் தடுக்கும் தர்க்கம்
                 val = Math.max(0, val - 82); 
                 
                 bar.style.transform = `rotate(${bar.dataset.angle}deg) translateY(-${ARC_RADIUS}px) scaleY(${1 + (val / 20)})`;
@@ -154,7 +154,6 @@
             
             const avgVol = totalVolume / vBars.length;
 
-            // விசுவலைசர் ஒளிரத் தொடங்கும் குறைந்தபட்ச சத்தத்தின் அளவு
             if (avgVol > 16) { 
                 lastActiveTime = Date.now(); 
                 vContainer.style.opacity = "1";
