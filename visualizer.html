@@ -14,11 +14,8 @@
             position: relative; display: flex; justify-content: center; align-items: center; box-sizing: border-box;
         }
         
-        /* அசல் வெள்ளி/வெள்ளை நிற ஒளி (Silver Glow) */
         #justice-glow {
-            position: absolute; 
-            top: 48.2%; left: 53%; /* பேனா முனையில் கச்சிதமாக நிற்க */
-            transform: translate(-50%, -50%); 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             width: 70px; height: 70px; border-radius: 50%; 
             background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 60%);
             filter: blur(2px); box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); 
@@ -26,21 +23,19 @@
         }
         
         #visualizer { 
-            position: absolute; 
-            top: 48.2%; left: 53%; 
-            transform: translate(-50%, -50%); 
-            width: 300px; height: 300px; z-index: 6; pointer-events: none; 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 150px; height: 150px; z-index: 6; pointer-events: none; 
             opacity: 0; 
             transition: opacity 0.4s ease-in-out; 
         }
         
-        /* அசல் மெல்லிய கதிர்கள் - தடிமன் குறைக்கப்பட்டுள்ளது (Reduced thickness) */
+        /* நீங்கள் கொடுத்த கச்சிதமான வளைய அளவுகள் */
         .v-bar {
             position: absolute; bottom: 50%; left: 50%; 
-            width: 2px; /* 2.5px-லிருந்து 1.2px ஆக குறைக்கப்பட்டுள்ளது */
-            height: 3px; 
-            background: #ffffff; /* தூய வெள்ளை/வெள்ளி நிறம் */
-            border-radius: 1px; margin-left: -0.6px; transform-origin: bottom center; 
+            width: 2.5px; 
+            height: 6px; 
+            background: #ffffff; 
+            border-radius: 1px; margin-left: -1.25px; transform-origin: bottom center; 
             box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.8); 
             will-change: transform;
         }
@@ -61,10 +56,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const roomName = urlParams.get('room') || 'VaagaiSeithigal';
         
-        // Ninja visualizer URL 
         document.getElementById('vdo-engine').src = `./index.html?scene&room=${roomName}&autostart`;
 
-        // நீங்கள் கேட்ட அசல் அளவுகள் 
         const ARC_RADIUS = 30; 
         let analyser, dataArray, vBars = []; 
         let audioCtx; 
@@ -155,10 +148,10 @@
                 
                 let val = dataArray[dIdx] || 0;
                 
-                // Noise Gate: சிறிய இரைச்சல்களைத் தடுக்கும் தர்க்கம்
                 val = Math.max(0, val - 82); 
                 
-                bar.style.transform = `rotate(${bar.dataset.angle}deg) translateY(-${ARC_RADIUS}px) scaleY(${1 + (val / 30)})`;
+                // கதிர்களின் உயரத்தை பலமடங்கு அதிகரிக்கும் தர்க்கம் (val / 6)
+                bar.style.transform = `rotate(${bar.dataset.angle}deg) translateY(-${ARC_RADIUS}px) scaleY(${1 + (val / 6)})`;
                 totalVolume += val; 
             });
             
