@@ -24,7 +24,7 @@
         
         #visualizer { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            width: 250px; height: 250px; z-index: 6; pointer-events: none; 
+            width: 100%; height: 100%; z-index: 6; pointer-events: none; 
             opacity: 0; 
             transition: opacity 0.4s ease-in-out; 
         }
@@ -150,8 +150,8 @@
                 
                 val = Math.max(0, val - 82); 
                 
-                // கதிர்களின் உயரத்தை பலமடங்கு அதிகரிக்கும் தர்க்கம் (val / 6)
-                bar.style.transform = `rotate(${bar.dataset.angle}deg) translateY(-${ARC_RADIUS}px) scaleY(${1 + (val / 6)})`;
+                // கதிர்களின் உயரத்தை பலமடங்கு அதிகரிக்கும் தர்க்கம் (val / 10)
+                bar.style.transform = `rotate(${bar.dataset.angle}deg) translateY(-${ARC_RADIUS}px) scaleY(${1 + (val / 10)})`;
                 totalVolume += val; 
             });
             
