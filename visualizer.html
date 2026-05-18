@@ -34,13 +34,14 @@
             transition: opacity 0.4s ease-in-out; 
         }
         
-        /* அசல் மெல்லிய கதிர்கள் (Thin Silver Rays) */
+        /* அசல் மெல்லிய கதிர்கள் - தடிமன் குறைக்கப்பட்டுள்ளது (Reduced thickness) */
         .v-bar {
             position: absolute; bottom: 50%; left: 50%; 
-            width: 2.5px; height: 12px; 
+            width: 1.2px; /* 2.5px-லிருந்து 1.2px ஆக குறைக்கப்பட்டுள்ளது */
+            height: 12px; 
             background: #ffffff; /* தூய வெள்ளை/வெள்ளி நிறம் */
-            border-radius: 2px; margin-left: -1px; transform-origin: bottom center; 
-            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.9); 
+            border-radius: 1px; margin-left: -0.6px; transform-origin: bottom center; 
+            box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.8); 
             will-change: transform;
         }
 
@@ -60,6 +61,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const roomName = urlParams.get('room') || 'VaagaiSeithigal';
         
+        // Ninja visualizer URL 
         document.getElementById('vdo-engine').src = `./index.html?scene&room=${roomName}&autostart`;
 
         // நீங்கள் கேட்ட அசல் அளவுகள் 
