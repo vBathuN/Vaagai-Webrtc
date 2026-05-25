@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script type="text/javascript">
+        // உங்கள் மெயின் டொமைன் முகவரியை இங்கே குறிப்பிடவும்
+        var mainDomain = "https://www.lawtamil.in";
+        
+        // தற்போதைய பாதையை (Path) மெயின் டொமைனுடன் இணைக்க விரும்பினால்:
+        // window.location.href = mainDomain + window.location.pathname;
+        
+        // நேரடியாக மெயின் டொமைன் முகப்பிற்கு செல்ல:
+        window.location.replace(mainDomain);
+    </script>
+    
+    <!-- JavaScript வேலை செய்யாத பட்சத்தில் மேனுவல் லிங்க் -->
+    <meta http-equiv="refresh" content="0; url=https://www.lawtamil.in">
+</head>
+<body>
+    <p>Redirecting to <a href="https://www.lawtamil.in">Main Domain</a>...</p>
+</body>
+</html>
