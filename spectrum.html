@@ -22,11 +22,11 @@
         #corner-bl { bottom: 0; left: 0; }
         #corner-br { bottom: 0; right: 0; }
         
-        /* கதிர்களின் அளவு சுருக்கப்பட்டது */
+        /* கதிர்களின் அளவு */
         .v-bar {
             position: absolute; bottom: 0; left: 0; 
-            width: 2.5px; height: 8px; 
-            border-radius: 1px; margin-left: -1.25px; 
+            width: 3px; height: 12px; 
+            border-radius: 1.5px; margin-left: -1.5px; 
             transform-origin: bottom center; 
             will-change: transform;
         }
@@ -34,13 +34,13 @@
         /* வலதுபுற மூலைகளுக்குச் சிவப்பு நிறம் */
         .v-bar-red {
             background: linear-gradient(0deg, #ff9999 0%, #ff0000 100%);
-            box-shadow: 0 0 8px rgba(255, 0, 0, 0.9);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.9);
         }
         
         /* இடதுபுற மூலைகளுக்குத் தங்க நிறம் */
         .v-bar-gold {
             background: linear-gradient(0deg, #ffe5b4 0%, #ffc16f 100%);
-            box-shadow: 0 0 8px rgba(255, 193, 111, 0.9);
+            box-shadow: 0 0 10px rgba(255, 193, 111, 0.9);
         }
 
         #vdo-engine { position: absolute; width: 10px; height: 10px; opacity: 0.01; pointer-events: none; z-index: -1; }
@@ -61,17 +61,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         const roomName = urlParams.get('room') || 'VaagaiSeithigal';
         
-        // VDO.Ninja Iframe-ஐ இணைத்தல்
         document.getElementById('vdo-engine').src = `./index.html?scene&room=${roomName}&autostart&stereo&proaudio`;
 
-        const ARC_RADIUS = 32; // Corner Arc-ல் கச்சிதமாகப் பொருந்துவதற்கான அளவு
         let analyser, dataArray, vBars = []; 
         let audioCtx; 
         let lastActiveTime = Date.now(); 
         
         const vContainer = document.getElementById('visualizer'); 
         
-        // வண்ண அமைப்புகள்: இடது (தங்கம்), வலது (சிவப்பு)
         const corners = [
             { id: 'corner-tl', startAngle: 90, endAngle: 180, colorClass: 'v-bar-gold' },
             { id: 'corner-tr', startAngle: 180, endAngle: 270, colorClass: 'v-bar-red' },
@@ -81,7 +78,6 @@
         
         const barsPerCorner = 15;
 
-        // கதிர்களை DOM-ல் உருவாக்குதல்
         corners.forEach(corner => {
             const container = document.getElementById(corner.id);
             const step = (corner.endAngle - corner.startAngle) / (barsPerCorner - 1);
@@ -92,10 +88,10 @@
                 const angle = corner.startAngle + (i * step); 
                 b.dataset.angle = angle;
                 
-                // Math.sin curve - மையத்தில் நீளமாகவும், ஓரங்களில் சிறியதாகவும் இருக்க
                 b.dataset.lengthMod = Math.sin((i / (barsPerCorner - 1)) * Math.PI);
                 
-                b.style.transform = `rotate(${angle}deg) translateY(-${ARC_RADIUS}px) scaleY(1)`;
+                /* இடைவெளி இன்றி நேரடியாக 0px லிருந்து சுழலும் */
+                b.style.transform = `rotate(${angle}deg) scaleY(1)`;
                 container.appendChild(b); 
                 vBars.push(b);
             }
@@ -115,7 +111,6 @@
 
             const iframe = document.getElementById('vdo-engine');
 
-            // WebRTC Iframe-லிருந்து ஆடியோவை எடுக்கும் Monkey Patch லாஜிக்
             setInterval(() => {
                 try {
                     const iframeWin = iframe.contentWindow;
@@ -166,22 +161,24 @@
             
             vBars.forEach((bar, index) => {
                 let cornerPos = index % barsPerCorner; 
-                let mapIdx = cornerPos < Math.floor(barsPerCorner/2) ? cornerPos : (barsPerCorner - 1) - cornerPos; 
+                
+                /* நடுகதிர் நீளமாக இருக்க Math.abs லாஜிக் */
+                let mapIdx = Math.abs(cornerPos - Math.floor(barsPerCorner / 2));
                 
                 const val = dataArray[2 + mapIdx * 2] || 0; 
-                let cleanVal = Math.max(0, val - 40); // ஆடியோ Noise-ஐத் தவிர்க்கும் Threshold
+                let cleanVal = Math.max(0, val - 40); 
                 
                 let lengthMod = parseFloat(bar.dataset.lengthMod);
-                // லோகோவைத் சீண்டாதவாறு கதிர்களின் உயரம் (ScaleY) கட்டுப்படுத்தப்பட்டுள்ளது
-                let scaleY = 1 + (cleanVal / 45) * (0.5 + lengthMod * 1.5);
                 
-                bar.style.transform = `rotate(${bar.dataset.angle}deg) translateY(-${ARC_RADIUS}px) scaleY(${scaleY})`; 
+                /* கதிர்களின் நீளத்தை கணிசமாகக் குறைக்கப்பட்ட அளவு */
+                let scaleY = 1 + (cleanVal / 60) * (0.5 + lengthMod * 1.2);
+                
+                bar.style.transform = `rotate(${bar.dataset.angle}deg) scaleY(${scaleY})`; 
                 totalVolume += cleanVal; 
             });
             
             const avgVol = totalVolume / vBars.length;
 
-            // ஆடியோ இருக்கும்போது காண்பிப்பது, 1.5 விநாடிகள் சத்தமில்லை எனில் மறைப்பது
             if (avgVol > 2) { 
                 lastActiveTime = Date.now(); 
                 vContainer.style.opacity = "1";
